@@ -1,21 +1,28 @@
-import { useState } from 'react'
+import { useState } from "react";
 
 function App() {
   const [good, setGood] = useState(0);
   const [neutral, setNeutral] = useState(0);
   const [bad, setBad] = useState(0);
 
+  const all = good + neutral + bad;
+  const average = all === 0 ? 0 : (good - bad) / all;
+  const positive = all === 0 ? 0 : (good / all) * 100;
+
   const handleGoodClick = () => {
-    setGood(good + 1);
-  }
+    const updatedGood = good + 1;
+    setGood(updatedGood);
+  };
 
   const handleNeutralClick = () => {
-    setNeutral(neutral + 1);
-  }
+    const updatedNeutral = neutral + 1;
+    setNeutral(updatedNeutral);
+  };
 
   const handleBadClick = () => {
-    setBad(bad + 1);
-  }
+    const updatedBad = bad + 1;
+    setBad(updatedBad);
+  };
 
   return (
     <div>
@@ -25,11 +32,20 @@ function App() {
       <button onClick={handleBadClick}>bad</button>
 
       <h1>statistics</h1>
-      <div>good { good }</div>
-      <div>neutral { neutral }</div>
-      <div>bad { bad }</div>
+      {all === 0 ? (
+        <p>No feedback given</p>
+      ) : (
+        <>
+          <div>good {good}</div>
+          <div>neutral {neutral}</div>
+          <div>bad {bad}</div>
+          <div>all {all}</div>
+          <div>average {average}</div>
+          <div>positive {positive}%</div>
+        </>
+      )}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
