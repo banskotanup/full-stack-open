@@ -3,12 +3,17 @@ import personService from "./services/persons";
 import Filter from "./Filter";
 import PersonForm from "./PersonForm";
 import Persons from "./Persons";
+import Notification from "./Notification";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [filterName, setFilterName] = useState("");
+  const [successMessage, setSuccessMessage] = useState("Some success message");
+  const [errorMessage, setErrorMessage] = useState("some errors");
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     personService.getAll().then((initializeData) => {
@@ -24,21 +29,39 @@ const App = () => {
   const handleFormSubmit = (e) => {
     e.preventDefault();
     if (persons.some((p) => p.name === newName)) {
-      const confirm = window.confirm(`${newName} is already added to phonebook, replace the old number with the new one?`);
+      const confirm = window.confirm(
+        `${newName} is already added to phonebook, replace the old number with the new one?`,
+      );
       if (!confirm) {
         return;
       }
 
-      const person = persons.find(p => p.name === newName);
-      const changedPerson = {...person, number: newNumber}
+      const person = persons.find((p) => p.name === newName);
+      const changedPerson = { ...person, number: newNumber };
 
       personService
         .update(person.id, changedPerson)
-        .then(returnedPerson => {
-          setPersons(persons.map(p => p.id === person.id ? returnedPerson : p));
+        .then((returnedPerson) => {
+          setPersons(
+            persons.map((p) => (p.id === person.id ? returnedPerson : p)),
+          );
+          setIsSuccess(true);
+          setSuccessMessage(`${newName} phone number changed to ${newNumber}`);
+          setTimeout(() => {
+            setSuccessMessage(null);
+            setIsSuccess(false);
+          }, 5000);
           setNewName("");
           setNewNumber("");
         })
+        .catch((err) => {
+          setIsError(true);
+          setErrorMessage(`Person ${newName} was already removed from server.`);
+          setTimeout(() => {
+            setErrorMessage(null);
+            setIsError(false);
+          }, 5000);
+        });
       return;
     }
     const personObject = {
@@ -46,10 +69,14 @@ const App = () => {
       number: newNumber,
     };
 
-    personService
-      .create(personObject)
-      .then((returnedPerson) => {
+    personService.create(personObject).then((returnedPerson) => {
       setPersons(persons.concat(returnedPerson));
+      setIsSuccess(true);
+      setSuccessMessage(`Added ${newName}`);
+      setTimeout(() => {
+        setSuccessMessage(null);
+        setIsSuccess(false);
+      }, 5000);
       setNewName("");
       setNewNumber("");
     });
@@ -76,18 +103,20 @@ const App = () => {
     personService
       .remove(id)
       .then(() => {
-        setPersons(persons.filter(p => p.id !== id));
+        setPersons(persons.filter((p) => p.id !== id));
       })
       .catch((err) => {
         console.log(err);
-        alert(`The person was already removed from server.`)
-        setPersons(persons.filter(p => p.id !== id));
-    });
-  }
+        alert(`The person was already removed from server.`);
+        setPersons(persons.filter((p) => p.id !== id));
+      });
+  };
 
   return (
     <div>
       <h2>Phonebook</h2>
+      {isSuccess && <Notification isSuccess={isSuccess} message={successMessage} />}
+      {isError && <Notification isError={isError} message={errorMessage} />}
       <Filter value={filterName} onChange={handleInputChange} />
       <h2>add a new</h2>
       <PersonForm
@@ -98,7 +127,7 @@ const App = () => {
         handleNumberChange={handleNumberChange}
       />
       <h2>Numbers</h2>
-      <Persons personsToShow={personsToShow} handleDelete={ handleDelete } />
+      <Persons personsToShow={personsToShow} handleDelete={handleDelete} />
     </div>
   );
 };
