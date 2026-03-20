@@ -1,8 +1,19 @@
 const express = require("express");
 const app = express();
+const cors = require("cors");
+app.use(cors());
+
+app.use(express.static('dist'));
+
+const morgan = require("morgan");
+
+morgan.token('body', (req) => {
+  return JSON.stringify(req.body);
+});
 
 app.use(express.json());
-
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body')
+);
 const generateId = () => {
   const maxId = persons.length > 0 ? Math.max(...persons.map(n => Number(n.id))) : 0;
   return String(maxId + 1);
@@ -59,7 +70,7 @@ app.post("/api/persons", (req, res) => {
   }
 
   persons = persons.concat(person);
-  res.json(persons);
+  res.json(person);
 })
 
 app.get("/info", (req, res) => {
