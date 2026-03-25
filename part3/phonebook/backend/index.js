@@ -1,11 +1,15 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
+const Person = require("./model/phonebook");
 const cors = require("cors");
 app.use(cors());
 
 app.use(express.static('dist'));
 
 const morgan = require("morgan");
+const { default: mongoose } = require("mongoose");
+const phonebook = require("./model/phonebook");
 
 morgan.token('body', (req) => {
   return JSON.stringify(req.body);
@@ -19,35 +23,42 @@ const generateId = () => {
   return String(maxId + 1);
 }
 
-let persons = [
-  {
-    name: "Arto Hellas",
-    number: "040-123456",
-    id: "1",
-  },
-  {
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-    id: "2",
-  },
-  {
-    name: "Dan Abramov",
-    number: "12-43-234345",
-    id: "3",
-  },
-  {
-    id: "4",
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
+// let persons = [
+//   {
+//     name: "Arto Hellas",
+//     number: "040-123456",
+//     id: "1",
+//   },
+//   {
+//     name: "Ada Lovelace",
+//     number: "39-44-5323523",
+//     id: "2",
+//   },
+//   {
+//     name: "Dan Abramov",
+//     number: "12-43-234345",
+//     id: "3",
+//   },
+//   {
+//     id: "4",
+//     name: "Mary Poppendieck",
+//     number: "39-23-6423122",
+//   },
+// ];
 
 app.get("/", (req, res) => {
     res.send("Hello, World!");
 })
 
 app.get("/api/persons", (req, res) => {
-    res.json(persons);
+  Person.find({}).then(result => {
+    console.log(`Fetched ${result.length} successfully`);
+    res.json(result);
+  })
+    .catch(error => {
+      console.log(`Error fetching data. Error: ${error.message}`);
+      res.status(500).json({ error: "Internal Server Error" });
+  })
 })
 
 app.post("/api/persons", (req, res) => {
@@ -57,20 +68,20 @@ app.post("/api/persons", (req, res) => {
       error: "name or number missing",
     })
   }
-  const isUniqueName = persons.some(p => p.name === body.name);
-  if (isUniqueName) {
-    return res.status(409).json({
-      error: "name must be unique"
-    });
-  }
-  const person = {
-    id: generateId(),
+  // const isUniqueName = persons.some(p => p.name === body.name);
+  // if (isUniqueName) {
+  //   return res.status(409).json({
+  //     error: "name must be unique"
+  //   });
+  // }
+  const person = new Person({
     name: body.name,
     number: body.number,
-  }
+  })
 
-  persons = persons.concat(person);
-  res.json(person);
+  person.save({}).then(savedPerson => {
+    res.json(savedPerson);
+  })
 })
 
 app.get("/info", (req, res) => {
@@ -82,11 +93,9 @@ app.get("/info", (req, res) => {
 
 app.get("/api/persons/:id", (req, res) => {
   const id = req.params.id;
-  const person = persons.find(p => p.id === id);
-  if (!person) {
-    return res.status(404).end();
-  }
-  res.json(person);
+  Person.findById(id).then(p => {
+    res.json(p);
+  })
 })
 
 app.delete("/api/persons/:id", (req, res) => {
