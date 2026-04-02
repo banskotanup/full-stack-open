@@ -8,7 +8,11 @@ const getAll = () => {
 
 const create = newObject => {
     const request = axios.post(baseUrl, newObject);
-    return request.then(res => res.data);
+    return request.then(res => res.data)
+        .catch(error => {
+            console.log(error.response.data.error);
+            throw new Error(error.response.data.error);
+        });
 }
 
 const update = (id, newObject) => {

@@ -8,7 +8,9 @@ app.use(cors());
 app.use(express.static('dist'));
 
 const errorHandler = (error, req, res, next) => {
-  console.log(error.message);
+  if (error.name === "ValidationError") {
+    return res.status(400).json({ error: error.message });
+  }
   next(error);
 }
 
@@ -63,7 +65,7 @@ app.get("/api/persons", (req, res, next) => {
     .catch(error => next(error));
 })
 
-app.post("/api/persons", (req, res) => {
+app.post("/api/persons", (req, res, next) => {
   const body = req.body;
   if (!body.name || !body.number) {
     return res.status(400).json({
@@ -79,6 +81,7 @@ app.post("/api/persons", (req, res) => {
   person.save({}).then(savedPerson => {
     res.json(savedPerson);
   })
+    .catch(error => next(error));
 })
 
 app.put("/api/persons/:id", (req, res, next) => {
@@ -92,11 +95,11 @@ app.put("/api/persons/:id", (req, res, next) => {
     person.name = body.name;
   person.number = body.number;
 
-  return person.save().then(updatedPerson => {
-    res.json(updatedPerson);
+    return person.save().then(updatedPerson => {
+      res.json(updatedPerson);
+    });
   })
-    .catch(error => next(error));
-  })
+  .catch(error => next(error));
 })
 
 app.get("/info", (req, res) => {
@@ -108,24 +111,25 @@ app.get("/info", (req, res) => {
   })
     .catch(error => {
       console.log(error);
-      res.status(500).send("Error retrieving info");
+      return res.status(500).send("Error retrieving info");
     });
 })
 
-app.get("/api/persons/:id", (req, res) => {
+app.get("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
   Person.findById(id).then(p => {
     res.json(p);
   })
+    .catch(error => next(error));
 })
 
 app.delete("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
   Person.findByIdAndDelete(id).then(person => {
     if (!person) {
-      res.status(404).end();
+      return res.status(404).end();
     }
-    res.status(204).end();
+    return res.status(204).end();
   })
     .catch(error => next(error));
 })

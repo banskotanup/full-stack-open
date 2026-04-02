@@ -79,7 +79,15 @@ const App = () => {
       }, 5000);
       setNewName("");
       setNewNumber("");
-    });
+    })
+      .catch(error => {
+        setIsError(true);
+        setErrorMessage(error.message);
+        setTimeout(() => {
+          setErrorMessage(null);
+          setIsError(false);
+        }, 5000);
+      });
   };
 
   const handleNameChange = (e) => {
